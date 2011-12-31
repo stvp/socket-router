@@ -11,7 +11,7 @@ Routes can capture params in the following way:
 
     "/users/USER_ID/signed_in"
 
-Which will be translated to the RegEx:
+Which will be translated to the RegExp:
 
     ^\/users\/([^\/]+)\/signed_in\/?$
 
