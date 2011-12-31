@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# Create build directory, if needed.
+if [ ! -d "./build" ]; then
+  mkdir build
+fi
+
+coffee --watch --compile --output ./build ./lib
