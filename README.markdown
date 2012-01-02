@@ -15,7 +15,7 @@ Which will be translated to the RegExp:
 
     ^\/users\/([^\/]+)\/signed_in\/?$
 
-Routes can capture any number of params. These captured params will be appended to the callback's arguments.
+Routes can capture any number of params. These captured params will be prepended to the callback's arguments.
 
 Usage
 -----
