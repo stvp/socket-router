@@ -1,32 +1,59 @@
-class Topo
-  constructor: (@socket) ->
-    @routes = []
-    @socket.on( "connect", =>
-      @socket.on( "message", @_handleMessage )
-    )
-    this
+# TODO: Check for namespace conflicts
 
-  route: (route, callback) ->
-    if typeof route == "object"
-      for _route, _callback of route
-        continue unless route.hasOwnProperty( _route )
-        this._register( _route, _callback )
+# Given a route string, build a RegExp that will match it and capture any
+# CAPS_AND_UNDERSCORE pieces. Eg.
+#
+#     "/users/USER_ID/typing"
+#
+# Becomes:
+#
+#     /^\/users\/([^\/]+)\/typing\/?$/
+#
+buildRegex = (route) ->
+  new RegExp( "^" + route.split( /[A-Z][A-Z_]+/ ).join( "([^/]+)" ) + "/?$" )
+
+# ==============
+# = io.on(...) =
+# ==============
+
+# Monkey patch io.on() to look for route-style names.
+io.SocketNamespace.prototype._on = io.SocketNamespace.prototype.on
+
+io.SocketNamespace.prototype.on = (name, fn) ->
+  @$routes = {} unless @$routes
+  # If the name looks like a route, add it to the routes object.
+  #
+  # NOTE: You can't use RegExps as object keys -- JavaScript will convert
+  # it to a string before making it a key. So that's the magic here.
+  if name[0] == "/"
+    regex = buildRegex( name )
+    if @$routes[regex]
+      @$routes[regex].callbacks.push( fn )
     else
-      this._register( route, callback )
-    this
+      @$routes[regex] = {
+        regexp: regex
+        callbacks: [fn]
+      }
 
-  _register: (route, callback) ->
-    regex = "^" + route.split( /[A-Z][A-Z_]+/ ).join( "([^\/]+)" ) + "/?$"
-    @routes[regex] = callback
-    null
+  # Resume as normal
+  return this._on.apply( null, arguments )
 
-  _handleMessage: (msg) ->
-    return unless msg instanceof Array
-    return unless typeof msg[0] == "string"
-    [route, data] = msg
-    for regex, callback of @routes
-      if args = route.match( regex )
-        args.shift()
-        args.push( data )
-        callback.apply( null, args )
-    null
+# ==============
+# = io.$emit() =
+# ==============
+
+# Monkey patch the $emit method, which handles all incomming messages.
+io.SocketNamespace.prototype._emit = io.SocketNamespace.prototype.$emit
+
+io.SocketNamespace.prototype.$emit = (name) ->
+  if name[0] == "/" && @$routes
+    for regexpStr, route of @$routes
+      if args = name.match( route.regexp )
+        args.shift() # Lose the raw route
+        # Add the message payload
+        args = args.concat( Array.prototype.slice.call( arguments, 1 ) )
+        for callback in route.callbacks
+          callback.apply( null, args )
+
+  # Resume as normal
+  return this._emit.apply( null, arguments )

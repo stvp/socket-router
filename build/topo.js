@@ -1,56 +1,49 @@
 (function() {
-  var Topo;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-  Topo = (function() {
-    function Topo(socket) {
-      this.socket = socket;
-      this.routes = [];
-      this.socket.on("connect", __bind(function() {
-        return this.socket.on("message", this._handleMessage);
-      }, this));
-      this;
-    }
-    Topo.prototype.route = function(route, callback) {
-      var _callback, _route;
-      if (typeof route === "object") {
-        for (_route in route) {
-          _callback = route[_route];
-          if (!route.hasOwnProperty(_route)) {
-            continue;
-          }
-          this._register(_route, _callback);
-        }
+  var buildRegex;
+
+  buildRegex = function(route) {
+    return new RegExp("^" + route.split(/[A-Z][A-Z_]+/).join("([^/]+)") + "/?$");
+  };
+
+  io.SocketNamespace.prototype._on = io.SocketNamespace.prototype.on;
+
+  io.SocketNamespace.prototype.on = function(name, fn) {
+    var regex;
+    if (!this.$routes) this.$routes = {};
+    if (name[0] === "/") {
+      regex = buildRegex(name);
+      if (this.$routes[regex]) {
+        this.$routes[regex].callbacks.push(fn);
       } else {
-        this._register(route, callback);
+        this.$routes[regex] = {
+          regexp: regex,
+          callbacks: [fn]
+        };
       }
-      return this;
-    };
-    Topo.prototype._register = function(route, callback) {
-      var regex;
-      regex = "^" + route.split(/[A-Z][A-Z_]+/).join("([^\/]+)") + "/?$";
-      this.routes[regex] = callback;
-      return null;
-    };
-    Topo.prototype._handleMessage = function(msg) {
-      var args, callback, data, regex, route, _ref;
-      if (!(msg instanceof Array)) {
-        return;
-      }
-      if (typeof msg[0] !== "string") {
-        return;
-      }
-      route = msg[0], data = msg[1];
-      _ref = this.routes;
-      for (regex in _ref) {
-        callback = _ref[regex];
-        if (args = route.match(regex)) {
+    }
+    return this._on.apply(null, arguments);
+  };
+
+  io.SocketNamespace.prototype._emit = io.SocketNamespace.prototype.$emit;
+
+  io.SocketNamespace.prototype.$emit = function(name) {
+    var args, callback, regexpStr, route, _i, _len, _ref, _ref2;
+    if (name[0] === "/" && this.$routes) {
+      _ref = this.$routes;
+      for (regexpStr in _ref) {
+        route = _ref[regexpStr];
+        if (args = name.match(route.regexp)) {
           args.shift();
-          args.push(data);
-          callback.apply(null, args);
+          args = args.concat(Array.prototype.slice.call(arguments, 1));
+          _ref2 = route.callbacks;
+          for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+            callback = _ref2[_i];
+            callback.apply(null, args);
+          }
         }
       }
-      return null;
-    };
-    return Topo;
-  })();
+    }
+    return this._emit.apply(null, arguments);
+  };
+
 }).call(this);
