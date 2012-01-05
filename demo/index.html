@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<head>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/build/topo.js"></script>
+  <script type="text/javascript" charset="utf-8">
+    var socket = io.connect( 'http://localhost' );
+    var topo = new Topo( socket );
+    socket.on( "/users/USER_ID/typing", function(userId, data) {
+      console.log( "User is typing! Arguments =", arguments );
+    });
+  </script>
+</head>
+<body>
+  <p>See console for output.</p>
+</body>
