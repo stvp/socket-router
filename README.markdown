@@ -1,7 +1,7 @@
 topo.js
 =======
 
-Extends socket.io's event names to allow for routes that can capture params. For example:
+Extends socket.io's handling of event names to allow routes that can capture params. For example:
 
 ```coffee
 socket = io.connect( "http://localhost/" )
@@ -31,7 +31,7 @@ All you need to do is include `topo.js` after you load `socket.io`:
 
 ```html
 <script src="/socket.io/socket.io.js"></script>
-<script src="/build/topo.js"></script>
+<script src="/topo.js"></script>
 ```
 
 Then use routes as your event names.
