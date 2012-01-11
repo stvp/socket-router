@@ -8,4 +8,4 @@ fi
 # Compile / join CoffeeScript
 coffee --compile --output ./build ./lib
 
-echo "Rickshaw build successful!"
+echo "socket-router build successful!"

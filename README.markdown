@@ -1,7 +1,7 @@
-topo.js
-=======
+socket-router
+=============
 
-Extends socket.io's handling of event names to allow routes that can capture params. For example:
+This tiny bit of JS extends socket.io's handling of event names to allow routes that can capture params. For example:
 
 ```coffee
 socket = io.connect( "http://localhost/" )
@@ -27,11 +27,11 @@ io.sockets.on( "connection", (socket) ->
 Usage
 =====
 
-All you need to do is include `topo.js` after you load `socket.io`:
+All you need to do is include `socket-router.js` after you load `socket.io`:
 
 ```html
 <script src="/socket.io/socket.io.js"></script>
-<script src="/topo.js"></script>
+<script src="/socket-router.js"></script>
 ```
 
 Then use routes as your event names.
